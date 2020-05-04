@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 /**
  * Sample React Native App
  * https://github.com/facebook/react-native
@@ -16,23 +17,41 @@ import {
   TouchableNativeFeedback,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 
+import AsyncStorage from '@react-native-community/async-storage';
 import Cita from './componentes/Cita';
 import Formulario from './componentes/Formulario';
 
 const App = () => {
   const [citas, setCitas] = useState([
-    {id: '1', paciente: 'Hook', propietario: 'Juan', sintomas: 'No come'},
-    {id: '2', paciente: 'Redux', propietario: 'Itzel', sintomas: 'No Duerme'},
-    {id: '3', paciente: 'Native', propietario: 'Josue', sintomas: 'No Canta'},
+    // {id: '1', paciente: 'Hook', propietario: 'Juan', sintomas: 'No come'},
+    // {id: '2', paciente: 'Redux', propietario: 'Itzel', sintomas: 'No Duerme'},
+    // {id: '3', paciente: 'Native', propietario: 'Josue', sintomas: 'No Canta'},
   ]);
   const [mostrarForm, guardarMostrarForm] = useState(false);
 
-  const eliminarPaciente = id => {
-    setCitas(citasActuales => {
-      return citasActuales.filter(cita => cita.id !== id);
-    });
+  useEffect(() => {
+    const obtenerCitasStorage = async () => {
+      try {
+        const citasStorage = await AsyncStorage.getItem('citas');
+        if (citasStorage) {
+          setCitas(JSON.parse(citasStorage));
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    obtenerCitasStorage();
+  }, []);
+
+  const eliminarPaciente = (id) => {
+    const citasFiltradas = citas.filter((cita) => cita.id !== id);
+    setCitas(citasFiltradas);
+    guardarCitasStorage(JSON.stringify(citasFiltradas));
+    // setCitas((citasActuales) => {
+    //   return citasActuales.filter((cita) => cita.id !== id);
+    // });
   };
 
   // Muestra u oculta el form
@@ -43,6 +62,14 @@ const App = () => {
   // oculta teclado
   const cerrarTeclado = () => {
     Keyboard.dismiss();
+  };
+
+  const guardarCitasStorage = async (citasJSON) => {
+    try {
+      await AsyncStorage.setItem('citas', citasJSON);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (
@@ -66,6 +93,7 @@ const App = () => {
                 citas={citas}
                 setCitas={setCitas}
                 guardarMostrarForm={guardarMostrarForm}
+                guardarCitasStorage={guardarCitasStorage}
               />
             </>
           ) : (
@@ -79,7 +107,7 @@ const App = () => {
                 renderItem={({item}) => (
                   <Cita cita={item} eliminarPaciente={eliminarPaciente} />
                 )}
-                keyExtractor={cita => cita.id}
+                keyExtractor={(cita, i) => cita.id}
               />
             </>
           )}
